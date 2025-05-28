@@ -1,3 +1,13 @@
+# Ignore processed dataset files
+Data/Processed/*.json
+
+# Ignore full card images if you save them later
+Data/Raw/
+
+# Ignore all data files
+Data/*
+!Data/External/Set_symbol_icons/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
