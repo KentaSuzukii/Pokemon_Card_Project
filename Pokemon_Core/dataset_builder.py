@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 import requests
@@ -11,10 +12,13 @@ from Pokemon_Core.config import (
     HARD_CODED_WIDTH, HARD_CODED_HEIGHT
 )
 
-def create_dataset() -> pd.DataFrame:
+def create_dataset(save_images: bool = True) -> pd.DataFrame:
     """Creates training dataset with bottom corners of Pokémon cards."""
     dataset_df = pd.DataFrame(columns=['corner', 'position', 'set_id', 'set_name'], index=[0])
     k = 0
+
+    if save_images:
+        os.makedirs("Data/Processed/Images", exist_ok=True)
 
     for j in range(SETINFO.shape[0]):
         s_id = SETINFO[j, 0]
@@ -28,10 +32,9 @@ def create_dataset() -> pd.DataFrame:
                 image = Image.open(BytesIO(response_card.content))
 
                 # Optional: save full card image
-                save_dir = "Data/Raw/Full_Cards"
-                os.makedirs(save_dir, exist_ok=True)
-                image.save(f"{save_dir}/card_{s_id}_{str(i)}.png")
-
+                # save_dir = "Data/Raw/Full_Cards"
+                # os.makedirs(save_dir, exist_ok=True)
+                # image.save(f"{save_dir}/card_{s_id}_{str(i)}.png")
 
                 card_image = np.array(image)
                 new_card = cv2.resize(card_image, (INITIAL_WIDTH, INITIAL_HEIGHT))
@@ -44,14 +47,22 @@ def create_dataset() -> pd.DataFrame:
                 grayright = cv2.cvtColor(bottomright, cv2.COLOR_BGR2GRAY)
 
                 if SETINFO[j, 3] == 'left':
-                    dataset_df.loc[k] = [grayleft, 'left', SETINFO[j, 0], SETINFO[j, 2]]; k += 1
-                    dataset_df.loc[k] = [grayright, 'right', 'no', 'no']; k += 1
+                    dataset_df.loc[k] = [grayleft.tolist(), 'left', s_id, SETINFO[j, 2]]; k += 1
+                    dataset_df.loc[k] = [grayright.tolist(), 'right', 'no', 'no']; k += 1
+                    if save_images:
+                        cv2.imwrite(f"Data/Processed/Images/{s_id}-{i}-left.jpg", grayleft)
+                        cv2.imwrite(f"Data/Processed/Images/{s_id}-{i}-right.jpg", grayright)
                 else:
-                    dataset_df.loc[k] = [grayleft, 'left', 'no', 'no']; k += 1
-                    dataset_df.loc[k] = [grayright, 'right', SETINFO[j, 0], SETINFO[j, 2]]; k += 1
+                    dataset_df.loc[k] = [grayleft.tolist(), 'left', 'no', 'no']; k += 1
+                    dataset_df.loc[k] = [grayright.tolist(), 'right', s_id, SETINFO[j, 2]]; k += 1
+                    if save_images:
+                        cv2.imwrite(f"Data/Processed/Images/{s_id}-{i}-left.jpg", grayleft)
+                        cv2.imwrite(f"Data/Processed/Images/{s_id}-{i}-right.jpg", grayright)
             else:
                 print(f"❌ Failed: {s_id}-{i} | Status {response_card.status_code}")
 
+    dataset_df.to_json("Data/Processed/full_dataset.json")
+    print("✅ Dataset saved at Data/Processed/full_dataset.json")
     return dataset_df
 
 
