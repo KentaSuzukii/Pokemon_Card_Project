@@ -26,6 +26,13 @@ def create_dataset() -> pd.DataFrame:
 
             if response_card.status_code == 200:
                 image = Image.open(BytesIO(response_card.content))
+
+                # Optional: save full card image
+                save_dir = "Data/Raw/Full_Cards"
+                os.makedirs(save_dir, exist_ok=True)
+                image.save(f"{save_dir}/card_{s_id}_{str(i)}.png")
+
+
                 card_image = np.array(image)
                 new_card = cv2.resize(card_image, (INITIAL_WIDTH, INITIAL_HEIGHT))
 
