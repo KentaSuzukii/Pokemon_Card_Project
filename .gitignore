@@ -1,12 +1,10 @@
-# Ignore processed dataset files
-Data/Processed/*.json
-
-# Ignore full card images if you save them later
-Data/Raw/
-
-# Ignore all data files
+# Ignore all contents in Data
 Data/*
-!Data/External/Set_symbol_icons/
+
+# But allow folder structure to be tracked
+!Data/
+!Data/**/
+!.gitkeep
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -186,4 +184,3 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 .python-version
-Data/External/Set_Symbols/
