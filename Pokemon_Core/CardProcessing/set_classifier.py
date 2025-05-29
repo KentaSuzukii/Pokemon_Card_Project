@@ -9,7 +9,7 @@ from tensorflow.keras.utils import to_categorical
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import confusion_matrix, classification_report
 
-from Pokemon_Core.Image.augmentation import load_corner_dataframe
+from Pokemon_Core.CardProcessing.augmentor import load_corner_dataframe
 from Pokemon_Core.config import HARD_CODED_WIDTH, HARD_CODED_HEIGHT
 
 # ─────────────────────────────────────────────────────────────────────────────

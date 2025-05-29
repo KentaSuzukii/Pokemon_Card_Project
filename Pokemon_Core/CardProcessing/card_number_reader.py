@@ -9,8 +9,8 @@ from typing import Optional
 from PIL import Image, ImageEnhance, ImageOps, ImageFilter
 
 from Pokemon_Core.config import SETINFO
-from Pokemon_Core.Image.prediction import extract_ocr_corner
-from Pokemon_Core.Image.deformer import deform_card
+from Pokemon_Core.CardProcessing.set_predictor import extract_ocr_corner
+from Pokemon_Core.CardProcessing.card_aligner import deform_card
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")

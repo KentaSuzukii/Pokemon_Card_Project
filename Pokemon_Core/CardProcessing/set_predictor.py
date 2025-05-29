@@ -12,7 +12,7 @@ from Pokemon_Core.config import (
     HIRES_WIDTH, HIRES_HEIGHT, RATIO,
     SETINFO
 )
-from Pokemon_Core.Image.deformer import deform_card
+from Pokemon_Core.CardProcessing.card_aligner import deform_card
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 📌 Prediction & Preprocessing Module
