@@ -1,3 +1,13 @@
+# Ignore processed dataset files
+Data/Processed/*.json
+
+# Ignore full card images if you save them later
+Data/Raw/
+
+# Ignore all data files
+Data/*
+!Data/External/Set_symbol_icons/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -81,6 +91,9 @@ target/
 # IPython
 profile_default/
 ipython_config.py
+
+# Ignore scraped images
+Data/External/Set_Symbols/
 
 # pyenv
 #   For a library or package, you might want to ignore these files since the code is
@@ -173,3 +186,4 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 .python-version
+Data/External/Set_Symbols/
