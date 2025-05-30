@@ -1,5 +1,9 @@
 # 📁 Scripts/train_classifier.py
 
+# The below 2 lines are added because my laptop has old GPU and there was some mismatch with the versions, etc. This forces CPU usage.
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
 import argparse
 from Pokemon_Core.CardProcessing.set_classifier import train_symbols_model
 
