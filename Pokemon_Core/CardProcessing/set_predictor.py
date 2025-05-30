@@ -1,4 +1,4 @@
-# 📁 Pokemon_Core/Image/prediction.py
+# 📁 Pokemon_Core/Image/set_prediction.py
 
 import cv2
 import numpy as np
