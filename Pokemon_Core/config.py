@@ -1,6 +1,7 @@
+# 📁 Pokemon_Core/config.py
+
 import numpy as np
 
-# Pokemon_Core/config.py
 BUCKET_NAME = "pokedex_data"
 
 # === IMAGE DIMENSIONS ===
@@ -13,6 +14,9 @@ HIRES_HEIGHT = INITIAL_HEIGHT * RATIO
 
 HARD_CODED_WIDTH = 200
 HARD_CODED_HEIGHT = 72
+
+# === DEBUG MODE ===
+DEBUG_MODE = False  # Toggle for cv2.imshow() visual debugging
 
 # === DATASET LIMITS ===
 NB_CARDS_PER_SET = 1000
