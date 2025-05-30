@@ -1,11 +1,11 @@
-# 📁 Pokemon_Core/Image/set_predictor.py
+# 📁 Pokemon_Core/CardProcessing/set_predictor.py
 
 import os
 import cv2
-import numpy as np
-import tensorflow as tf
 import pickle
 import logging
+import numpy as np
+import tensorflow as tf
 from dataclasses import dataclass
 from sklearn.preprocessing import LabelEncoder
 
@@ -19,17 +19,15 @@ from Pokemon_Core.CardProcessing.card_aligner import deform_card
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 📌 Set Predictor Module
-# Given a user-uploaded image, this module:
-# - Aligns the card via perspective correction
-# - Extracts bottom corners for set prediction
-# - Extracts high-res region for OCR (corner depends on predicted set)
+# Given a card image, this module aligns the card, extracts corners,
+# runs the trained classifier, and prepares high-resolution crops for OCR.
 # ─────────────────────────────────────────────────────────────────────────────
 
-# ─── Logger Setup ────────────────────────────────────────────────────────────
+# 🛠️ Logger Setup
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-# ─── Card Image Dimension Configuration ──────────────────────────────────────
+# 🖼️ Dimension Configuration Dataclass
 @dataclass(frozen=True)
 class CardConfig:
     init_w: int = INITIAL_WIDTH
@@ -42,21 +40,45 @@ class CardConfig:
 
 cfg = CardConfig()
 
-# ─── Load Trained Model and Label Encoder ─────────────────────────────────────
-def load_prediction_assets(model_path="best_symbols_model.h5", encoder_path="label_encoder.pkl"):
+# ─────────────────────────────────────────────────────────────────────────────
+# 📥 Load Trained Assets (Model + Label Encoder)
+# Loads both the Keras model and label encoder from the Models/ directory.
+# Handles missing encoder file gracefully.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def load_prediction_assets(model_path="Models/best_symbols_model.h5", encoder_path="Models/label_encoder.pkl"):
     """
     Loads the trained CNN model and label encoder for set prediction.
+
+    Args:
+        model_path (str): Path to .h5 Keras model file
+        encoder_path (str): Path to .pkl LabelEncoder
+
+    Returns:
+        model (tf.keras.Model), label_encoder (LabelEncoder)
     """
+    # 🧠 Load model
     logger.info(f"🔍 Loading model from: {model_path}")
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(f"❌ Model file not found at {model_path}")
     model = tf.keras.models.load_model(model_path)
 
+    # 🧠 Load label encoder
     logger.info(f"🔍 Loading label encoder from: {encoder_path}")
+    if not os.path.exists(encoder_path):
+        logger.warning("⚠️ Label encoder file not found. Returning empty LabelEncoder.")
+        return model, LabelEncoder()
+
     with open(encoder_path, "rb") as f:
         label_encoder = pickle.load(f)
 
     return model, label_encoder
 
-# ─── Bottom Corner Cropping for Prediction ────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
+# 🔻 Corner Extraction for Classification
+# Aligns the card and extracts the bottom-left and bottom-right grayscale corners.
+# ─────────────────────────────────────────────────────────────────────────────
+
 def extract_corners(card_img: np.ndarray, cfg: CardConfig = cfg) -> tuple[np.ndarray, np.ndarray]:
     """
     Applies alignment + crops left/right corners, then normalizes them.
@@ -80,7 +102,11 @@ def extract_corners(card_img: np.ndarray, cfg: CardConfig = cfg) -> tuple[np.nda
 
     return gray_left, gray_right
 
-# ─── Predict Set ID from a Single Corner ──────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
+# 🔮 Set Prediction from Single Corner
+# Runs the model to get a predicted class and returns its label.
+# ─────────────────────────────────────────────────────────────────────────────
+
 def predict_set_id(model: tf.keras.Model, corner: np.ndarray, label_encoder: LabelEncoder) -> str:
     """
     Runs prediction and returns decoded set ID string.
@@ -89,7 +115,11 @@ def predict_set_id(model: tf.keras.Model, corner: np.ndarray, label_encoder: Lab
     class_idx = np.argmax(probs, axis=1)[0]
     return label_encoder.inverse_transform([class_idx])[0]
 
-# ─── High-Resolution Crop for OCR Use ─────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
+# 🔍 OCR Crop Extractor
+# Uses set-specific info to extract the high-resolution OCR region.
+# ─────────────────────────────────────────────────────────────────────────────
+
 def extract_ocr_corner(card_img: np.ndarray, set_id: str, cfg: CardConfig = cfg) -> np.ndarray:
     """
     Crops high-resolution bottom corner region for OCR, based on set's expected corner side.
