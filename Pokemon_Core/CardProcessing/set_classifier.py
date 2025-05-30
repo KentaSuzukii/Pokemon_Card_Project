@@ -1,5 +1,4 @@
-# 📁 Pokemon_Core/Image/modelling.py
-
+import os
 import random
 import numpy as np
 import pandas as pd
@@ -8,27 +7,21 @@ from tensorflow.keras import layers, callbacks, Sequential
 from tensorflow.keras.utils import to_categorical
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import confusion_matrix, classification_report
+import matplotlib.pyplot as plt
 
 from Pokemon_Core.CardProcessing.augmentor import load_corner_dataframe
 from Pokemon_Core.config import HARD_CODED_WIDTH, HARD_CODED_HEIGHT
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 📌 CNN Model Training Module
-# This module loads the reduced corner dataset, prepares it for training,
-# builds a simple CNN, and trains it to classify the set_id based on corner crops.
+# 📌 CNN Model Training Module for Set Classification
+# Trains on corner crops using a robust CNN and visualizes performance.
 # ─────────────────────────────────────────────────────────────────────────────
 
-# ─── Reproducibility ─────────────────────────────────────────────────────────
 random.seed(42)
 np.random.seed(42)
 tf.random.set_seed(42)
 
-# ─── Dataset Preprocessing ───────────────────────────────────────────────────
 def preprocessing(path: str, train_frac=0.70, val_frac=0.15):
-    """
-    Loads and splits the dataset from JSON, encodes labels,
-    normalizes images, and splits into train/val/test sets.
-    """
     df = load_corner_dataframe(path)
     df = df.sample(frac=1, random_state=42).reset_index(drop=True)
 
@@ -50,7 +43,6 @@ def preprocessing(path: str, train_frac=0.70, val_frac=0.15):
 
     return X_train, y_train, X_val, y_val, X_test, y_test, le
 
-# ─── TF Dataset Wrapping ─────────────────────────────────────────────────────
 def make_dataset(X, y, batch_size=32, shuffle_buffer=None, training=True):
     ds = tf.data.Dataset.from_tensor_slices((X, y))
     if training:
@@ -59,7 +51,6 @@ def make_dataset(X, y, batch_size=32, shuffle_buffer=None, training=True):
     ds = ds.batch(batch_size).prefetch(tf.data.AUTOTUNE)
     return ds
 
-# ─── CNN Architecture ────────────────────────────────────────────────────────
 def build_cnn(input_shape, num_classes):
     model = Sequential([
         layers.Conv2D(32, 3, padding='same', activation='relu', input_shape=input_shape),
@@ -84,12 +75,32 @@ def build_cnn(input_shape, num_classes):
     ])
     return model
 
-# ─── Training and Evaluation ──────────────────────────────────────────────────
+def save_training_plots(history, out_dir="Plots"):
+    os.makedirs(out_dir, exist_ok=True)
+
+    plt.figure()
+    plt.plot(history.history['accuracy'], label='Train Accuracy')
+    plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+    plt.title("Training vs Validation Accuracy")
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy")
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(os.path.join(out_dir, "accuracy_plot.png"))
+    plt.close()
+
+    plt.figure()
+    plt.plot(history.history['loss'], label='Train Loss')
+    plt.plot(history.history['val_loss'], label='Validation Loss')
+    plt.title("Training vs Validation Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(os.path.join(out_dir, "loss_plot.png"))
+    plt.close()
+
 def train_symbols_model(data_path: str, batch_size=32, epochs=20):
-    """
-    Trains a CNN model on the given JSON dataset and evaluates its performance.
-    Returns the model, training history, confusion matrix, and label encoder.
-    """
     X_train, y_train, X_val, y_val, X_test, y_test, le = preprocessing(data_path)
 
     train_ds = make_dataset(X_train, y_train, batch_size, training=True)
@@ -107,6 +118,8 @@ def train_symbols_model(data_path: str, batch_size=32, epochs=20):
     ]
 
     history = model.fit(train_ds, epochs=epochs, validation_data=val_ds, callbacks=cbs)
+
+    save_training_plots(history)
 
     y_pred_prob = model.predict(test_ds)
     y_true = np.argmax(y_test, axis=1)
