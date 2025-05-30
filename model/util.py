@@ -1,7 +1,16 @@
+import os
+import numpy as np
+import pandas as pd
+import requests
+import cv2
+from tqdm import tqdm
+from sklearn.utils.class_weight import compute_class_weight
+
 import pandas as pd
 import numpy as np
 import requests
 import cv2
+
 
 from model import (
     SETINFO,
@@ -12,13 +21,18 @@ from model import (
     REDUCED_SET,
 )
 
+
+# ---------------------- Core Download/Crop Functions ----------------------
+
 def download_image(session: requests.Session, s_id: str, card_index: int) -> np.ndarray | None:
     """Fetches a high-res PNG from the Pokémon TCG API and returns it as a BGR OpenCV image."""
     url = f'https://images.pokemontcg.io/{s_id}/{card_index}_hires.png'
     try:
         resp = session.get(url, timeout=5)
         resp.raise_for_status()
+
         # Decode PNG bytes into BGR image
+
         img_array = np.frombuffer(resp.content, np.uint8)
         return cv2.imdecode(img_array, cv2.IMREAD_COLOR)
     except requests.RequestException:
@@ -34,9 +48,10 @@ def crop_corners(img: np.ndarray, corner_w: int, corner_h: int) -> tuple[np.ndar
     gray_br = cv2.cvtColor(br, cv2.COLOR_BGR2GRAY)
     return gray_bl, gray_br
 
-def make_record(
-    corner_img: np.ndarray, position: str, set_id: str, set_name: str
-) -> dict:
+
+
+def make_record(corner_img: np.ndarray, position: str, set_id: str, set_name: str) -> dict:
+
     """Packages one corner crop into a record suitable for a DataFrame row."""
     return {
         'corner':   corner_img,
@@ -44,6 +59,10 @@ def make_record(
         'set_id':   set_id,
         'set_name': set_name,
     }
+
+
+# ---------------------- Dataset Builder with Progress and Robustness ----------------------
+
 
 def create_dataset() -> pd.DataFrame:
     """
@@ -60,6 +79,17 @@ def create_dataset() -> pd.DataFrame:
     for s_id, count, set_name, side, _ in SETINFO:
         total = int(count)
         print(f"▶️ Processing set {s_id} ({total} cards)")
+
+        for i in tqdm(range(1, total + 1), desc=f"Set {s_id}"):
+            img = download_image(session, s_id, i)
+            if img is None:
+                continue
+            try:
+                resized = cv2.resize(img, (INITIAL_WIDTH, INITIAL_HEIGHT))
+                gray_left, gray_right = crop_corners(resized, HARD_CODED_WIDTH, HARD_CODED_HEIGHT)
+            except cv2.error:
+                print(f"⚠️ OpenCV error on set {s_id} card {i}")
+                continue
         for i in range(1, total + 1):
             img = download_image(session, s_id, i)
             if img is None:
@@ -67,6 +97,7 @@ def create_dataset() -> pd.DataFrame:
 
             resized = cv2.resize(img, (INITIAL_WIDTH, INITIAL_HEIGHT))
             gray_left, gray_right = crop_corners(resized, HARD_CODED_WIDTH, HARD_CODED_HEIGHT)
+
 
             if side == 'left':
                 records.append(make_record(gray_left,  'left',  s_id,      set_name))
@@ -77,7 +108,28 @@ def create_dataset() -> pd.DataFrame:
 
     return pd.DataFrame.from_records(records)
 
+
+# ---------------------- Memory-Efficient Disk Storage (Optional) ----------------------
+
+def save_crops_to_disk(df, out_dir="crops"):
+    os.makedirs(out_dir, exist_ok=True)
+    new_records = []
+    for idx, row in df.iterrows():
+        fname = f"{row['position']}_{row['set_id']}_{idx}.png"
+        path = os.path.join(out_dir, fname)
+        cv2.imwrite(path, row['corner'])
+        new_records.append({
+            "img_path": path,
+            "position": row["position"],
+            "set_id": row["set_id"],
+            "set_name": row["set_name"]
+        })
+    return pd.DataFrame(new_records)
+
+# ---------------------- Class Balancing ----------------------
+
 def reduce_side(df: pd.DataFrame, side: str, reduced_set: int = REDUCED_SET) -> pd.DataFrame:
+
     """
     Keeps at most `reduced_set` samples per set_id for the given side.
     Returns a balanced DataFrame.
@@ -87,6 +139,53 @@ def reduce_side(df: pd.DataFrame, side: str, reduced_set: int = REDUCED_SET) -> 
     sampled = grouped.apply(
         lambda g: g if len(g) <= reduced_set else g.sample(n=reduced_set, random_state=42)
     )
+
+    sampled = sampled.reset_index(drop=True)
+    if verbose:
+        print(f"Sample count per class for '{side}':\n{sampled['set_id'].value_counts()}")
+    return sampled
+
+# ---------------------- Model Ready Preprocessing ----------------------
+
+def prepare_X_y(df, img_key='corner'):
+    X = np.stack([np.expand_dims(img, -1) if img.ndim == 2 else img for img in df[img_key].values])
+    X = X.astype('float32') / 255.
+    y = df['set_id'].values
+    return X, y
+
+# ---------------------- Class Weights (for Imbalance) ----------------------
+
+def compute_class_weights(y):
+    classes = np.unique(y)
+    class_weights = compute_class_weight('balanced', classes=classes, y=y)
+    class_weight_dict = dict(zip(classes, class_weights))
+    return class_weight_dict
+
+# ---------------------- Example Usage (Commented for Notebooks/Scripts) ----------------------
+
+if __name__ == "__main__":
+    # 1. Build the full dataset
+    df_full = create_dataset()
+    print("Total records:", len(df_full))
+
+    # 2. Optionally balance per side and/or save crops to disk
+    df_left  = reduce_side(df_full, 'left')
+    df_right = reduce_side(df_full, 'right')
+
+    # 3. If needed, save balanced crops
+    # df_left_disk = save_crops_to_disk(df_left, out_dir="crops_left")
+    # df_right_disk = save_crops_to_disk(df_right, out_dir="crops_right")
+
+    # 4. Prepare data for ML
+    X_left, y_left = prepare_X_y(df_left)
+    X_right, y_right = prepare_X_y(df_right)
+
+    # 5. Compute class weights
+    class_weight_left = compute_class_weights(y_left)
+    print("Class weights (left):", class_weight_left)
+
+    # Now you're ready to train a model!
+
     return sampled.reset_index(drop=True)
 
 def reduce_dataset(json_path: str) -> None:
@@ -101,3 +200,4 @@ def reduce_dataset(json_path: str) -> None:
 
     df_right = reduce_side(df_full, 'right')
     df_right.to_json('../../raw_data/dict_reduceddataset_right.json')
+
