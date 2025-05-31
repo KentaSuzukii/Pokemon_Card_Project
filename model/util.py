@@ -6,6 +6,7 @@ import cv2
 from tqdm import tqdm
 from sklearn.utils.class_weight import compute_class_weight
 
+
 from model import (
     SETINFO,
     INITIAL_WIDTH,
@@ -23,6 +24,7 @@ def download_image(session: requests.Session, s_id: str, card_index: int) -> np.
     try:
         resp = session.get(url, timeout=5)
         resp.raise_for_status()
+
         img_array = np.frombuffer(resp.content, np.uint8)
         return cv2.imdecode(img_array, cv2.IMREAD_COLOR)
     except requests.RequestException:
@@ -39,6 +41,7 @@ def crop_corners(img: np.ndarray, corner_w: int, corner_h: int) -> tuple[np.ndar
     return gray_bl, gray_br
 
 def make_record(corner_img: np.ndarray, position: str, set_id: str, set_name: str) -> dict:
+
     """Packages one corner crop into a record suitable for a DataFrame row."""
     return {
         'corner':   corner_img,
@@ -65,6 +68,7 @@ def create_dataset() -> pd.DataFrame:
         total = int(count)
         print(f"▶️ Processing set {s_id} ({total} cards)")
         for i in tqdm(range(1, total + 1), desc=f"Set {s_id}"):
+
             img = download_image(session, s_id, i)
             if img is None:
                 continue
@@ -74,6 +78,7 @@ def create_dataset() -> pd.DataFrame:
             except cv2.error:
                 print(f"⚠️ OpenCV error on set {s_id} card {i}")
                 continue
+
 
             if side == 'left':
                 records.append(make_record(gray_left,  'left',  s_id,      set_name))
@@ -113,10 +118,54 @@ def reduce_side(df: pd.DataFrame, side: str, reduced_set: int = REDUCED_SET, ver
     sampled = grouped.apply(
         lambda g: g if len(g) <= reduced_set else g.sample(n=reduced_set, random_state=42)
     )
+
     sampled = sampled.reset_index(drop=True)
     if verbose:
         print(f"Sample count per class for '{side}':\n{sampled['set_id'].value_counts()}")
     return sampled
+
+# ---------------------- Model Ready Preprocessing ----------------------
+
+def prepare_X_y(df, img_key='corner'):
+    X = np.stack([np.expand_dims(img, -1) if img.ndim == 2 else img for img in df[img_key].values])
+    X = X.astype('float32') / 255.
+    y = df['set_id'].values
+    return X, y
+
+# ---------------------- Class Weights (for Imbalance) ----------------------
+
+def compute_class_weights(y):
+    classes = np.unique(y)
+    class_weights = compute_class_weight('balanced', classes=classes, y=y)
+    class_weight_dict = dict(zip(classes, class_weights))
+    return class_weight_dict
+
+# ---------------------- Example Usage (Commented for Notebooks/Scripts) ----------------------
+
+if __name__ == "__main__":
+    # 1. Build the full dataset
+    df_full = create_dataset()
+    print("Total records:", len(df_full))
+
+    # 2. Optionally balance per side and/or save crops to disk
+    df_left  = reduce_side(df_full, 'left')
+    df_right = reduce_side(df_full, 'right')
+
+    # 3. If needed, save balanced crops
+    # df_left_disk = save_crops_to_disk(df_left, out_dir="crops_left")
+    # df_right_disk = save_crops_to_disk(df_right, out_dir="crops_right")
+
+    # 4. Prepare data for ML
+    X_left, y_left = prepare_X_y(df_left)
+    X_right, y_right = prepare_X_y(df_right)
+
+    # 5. Compute class weights
+    class_weight_left = compute_class_weights(y_left)
+    print("Class weights (left):", class_weight_left)
+
+    # Now you're ready to train a model!
+
+    return sampled.reset_index(drop=True)
 
 # ---------------------- Model Ready Preprocessing ----------------------
 
