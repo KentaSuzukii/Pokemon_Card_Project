@@ -2,7 +2,7 @@
 # 📁 Scripts/run_dataset_builder.py
 # =========================
 
-from Pokemon_Core.dataset_builder import create_dataset
+from Pokemon_Core.Data_Module.dataset_builder import create_dataset
 
 if __name__ == "__main__":
     print("📦 Creating Pokémon card training dataset...")
