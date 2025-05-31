@@ -2,7 +2,7 @@
 # 📁 Scripts/run_dataset_reduction.py
 # =========================
 
-from Pokemon_Core.dataset_builder import reduce_dataset
+from Pokemon_Core.Data_Module.dataset_builder import reduce_dataset
 
 if __name__ == "__main__":
     print("✂️ Reducing full dataset into balanced training sets...")
