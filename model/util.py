@@ -6,11 +6,6 @@ import cv2
 from tqdm import tqdm
 from sklearn.utils.class_weight import compute_class_weight
 
-import pandas as pd
-import numpy as np
-import requests
-import cv2
-
 
 from model import (
     SETINFO,
@@ -21,7 +16,6 @@ from model import (
     REDUCED_SET,
 )
 
-
 # ---------------------- Core Download/Crop Functions ----------------------
 
 def download_image(session: requests.Session, s_id: str, card_index: int) -> np.ndarray | None:
@@ -30,8 +24,6 @@ def download_image(session: requests.Session, s_id: str, card_index: int) -> np.
     try:
         resp = session.get(url, timeout=5)
         resp.raise_for_status()
-
-        # Decode PNG bytes into BGR image
 
         img_array = np.frombuffer(resp.content, np.uint8)
         return cv2.imdecode(img_array, cv2.IMREAD_COLOR)
@@ -48,8 +40,6 @@ def crop_corners(img: np.ndarray, corner_w: int, corner_h: int) -> tuple[np.ndar
     gray_br = cv2.cvtColor(br, cv2.COLOR_BGR2GRAY)
     return gray_bl, gray_br
 
-
-
 def make_record(corner_img: np.ndarray, position: str, set_id: str, set_name: str) -> dict:
 
     """Packages one corner crop into a record suitable for a DataFrame row."""
@@ -60,9 +50,7 @@ def make_record(corner_img: np.ndarray, position: str, set_id: str, set_name: st
         'set_name': set_name,
     }
 
-
 # ---------------------- Dataset Builder with Progress and Robustness ----------------------
-
 
 def create_dataset() -> pd.DataFrame:
     """
@@ -79,8 +67,8 @@ def create_dataset() -> pd.DataFrame:
     for s_id, count, set_name, side, _ in SETINFO:
         total = int(count)
         print(f"▶️ Processing set {s_id} ({total} cards)")
-
         for i in tqdm(range(1, total + 1), desc=f"Set {s_id}"):
+
             img = download_image(session, s_id, i)
             if img is None:
                 continue
@@ -90,13 +78,6 @@ def create_dataset() -> pd.DataFrame:
             except cv2.error:
                 print(f"⚠️ OpenCV error on set {s_id} card {i}")
                 continue
-        for i in range(1, total + 1):
-            img = download_image(session, s_id, i)
-            if img is None:
-                continue
-
-            resized = cv2.resize(img, (INITIAL_WIDTH, INITIAL_HEIGHT))
-            gray_left, gray_right = crop_corners(resized, HARD_CODED_WIDTH, HARD_CODED_HEIGHT)
 
 
             if side == 'left':
@@ -107,7 +88,6 @@ def create_dataset() -> pd.DataFrame:
                 records.append(make_record(gray_right, 'right', s_id,      set_name))
 
     return pd.DataFrame.from_records(records)
-
 
 # ---------------------- Memory-Efficient Disk Storage (Optional) ----------------------
 
@@ -128,8 +108,7 @@ def save_crops_to_disk(df, out_dir="crops"):
 
 # ---------------------- Class Balancing ----------------------
 
-def reduce_side(df: pd.DataFrame, side: str, reduced_set: int = REDUCED_SET) -> pd.DataFrame:
-
+def reduce_side(df: pd.DataFrame, side: str, reduced_set: int = REDUCED_SET, verbose=True) -> pd.DataFrame:
     """
     Keeps at most `reduced_set` samples per set_id for the given side.
     Returns a balanced DataFrame.
@@ -188,16 +167,43 @@ if __name__ == "__main__":
 
     return sampled.reset_index(drop=True)
 
-def reduce_dataset(json_path: str) -> None:
-    """
-    Loads the full dataset JSON, balances left/right sides separately,
-    and writes two reduced JSON files.
-    """
-    df_full = pd.read_json(json_path)
+# ---------------------- Model Ready Preprocessing ----------------------
 
+def prepare_X_y(df, img_key='corner'):
+    X = np.stack([np.expand_dims(img, -1) if img.ndim == 2 else img for img in df[img_key].values])
+    X = X.astype('float32') / 255.
+    y = df['set_id'].values
+    return X, y
+
+# ---------------------- Class Weights (for Imbalance) ----------------------
+
+def compute_class_weights(y):
+    classes = np.unique(y)
+    class_weights = compute_class_weight('balanced', classes=classes, y=y)
+    class_weight_dict = dict(zip(classes, class_weights))
+    return class_weight_dict
+
+# ---------------------- Example Usage (Commented for Notebooks/Scripts) ----------------------
+
+if __name__ == "__main__":
+    # 1. Build the full dataset
+    df_full = create_dataset()
+    print("Total records:", len(df_full))
+
+    # 2. Optionally balance per side and/or save crops to disk
     df_left  = reduce_side(df_full, 'left')
-    df_left.to_json('../../raw_data/dict_reduceddataset_left.json')
-
     df_right = reduce_side(df_full, 'right')
-    df_right.to_json('../../raw_data/dict_reduceddataset_right.json')
 
+    # 3. If needed, save balanced crops
+    # df_left_disk = save_crops_to_disk(df_left, out_dir="crops_left")
+    # df_right_disk = save_crops_to_disk(df_right, out_dir="crops_right")
+
+    # 4. Prepare data for ML
+    X_left, y_left = prepare_X_y(df_left)
+    X_right, y_right = prepare_X_y(df_right)
+
+    # 5. Compute class weights
+    class_weight_left = compute_class_weights(y_left)
+    print("Class weights (left):", class_weight_left)
+
+    # Now you're ready to train a model!

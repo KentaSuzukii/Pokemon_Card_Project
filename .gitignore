@@ -1,5 +1,6 @@
 # Ignore all contents in Data
 Data/*
+*.jpg
 
 # But allow folder structure to be tracked
 !Data/
