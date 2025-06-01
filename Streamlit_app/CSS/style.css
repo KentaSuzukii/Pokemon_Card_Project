@@ -1,0 +1,17 @@
+/* Background */
+body {
+    background-image: url("../Assets/background.jpeg");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+/* Hide Streamlit branding */
+footer {visibility: hidden;}
+#MainMenu {visibility: hidden;}
+
+/* Content area styling */
+h1, h4 {
+    color: #fff;
+    text-shadow: 2px 2px 4px #000;
+}
