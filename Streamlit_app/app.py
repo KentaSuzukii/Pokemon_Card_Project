@@ -4,9 +4,9 @@ import os
 import sys
 import streamlit as st
 import streamlit.web.cli as stcli
-from Streamlit_app.page_identifier import show_identifier_page
-from Streamlit_app.page_buying_advice import show_buying_advice_page
-from Streamlit_app.ui_helpers import inject_custom_css
+from page_identifier import show_identifier_page
+from page_buying_advice import show_buying_advice_page
+from ui_helpers import inject_custom_css
 
 # Page setup
 st.set_page_config(page_title="Pokémon Card Analyzer", layout="wide")
