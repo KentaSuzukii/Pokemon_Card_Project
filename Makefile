@@ -1,11 +1,14 @@
 # Makefile for building, running, and deploying the Streamlit app
 
 PROJECT_NAME=pokemon-card-app
-IMAGE_NAME=gcr.io/YOUR_GCP_PROJECT_ID/$(PROJECT_NAME)
+IMAGE_NAME=gcr.io/pokemon-card-app-1983/$(PROJECT_NAME)
 
 # Build the Docker image
 build:
 	docker build -t $(PROJECT_NAME) .
+
+build-no-cache:
+	docker build --no-cache -t $(IMAGE_NAME) .
 
 # Run the container locally
 run:
@@ -23,7 +26,6 @@ deploy:
 		--platform managed \
 		--region asia-northeast1 \
 		--allow-unauthenticated \
-		--port 8501
 
 # Clean up Docker images
 clean:

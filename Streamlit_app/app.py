@@ -1,6 +1,9 @@
 # Streamlit_app/app.py
 
+import os
+import sys
 import streamlit as st
+import streamlit.web.cli as stcli
 from Streamlit_app.page_identifier import show_identifier_page
 from Streamlit_app.page_buying_advice import show_buying_advice_page
 from Streamlit_app.ui_helpers import inject_custom_css
@@ -25,3 +28,14 @@ if page == "📷 Identify Card from Image":
     show_identifier_page()
 else:
     show_buying_advice_page()
+
+# Made a separate run_streamlit.py file for the below code and it is placed in Scripts folder
+# if __name__ == "__main__":
+#     port = os.environ.get("PORT", "8501")
+#     sys.argv = [
+#         "streamlit", "run", "Streamlit_app/app.py",
+#         "--server.port", port,
+#         "--server.address", "0.0.0.0",  # REQUIRED for Cloud Run!
+#         "--server.enableCORS=false"
+#     ]
+#     sys.exit(stcli.main())
