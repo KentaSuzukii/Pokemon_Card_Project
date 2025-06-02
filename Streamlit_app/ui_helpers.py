@@ -2,7 +2,7 @@
 
 import streamlit as st
 
-def inject_custom_css(css_path):
+def inject_custom_css(css_path = "CSS/style.css"):
     try:
         with open(css_path, "r") as f:
             st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
