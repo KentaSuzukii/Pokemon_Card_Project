@@ -16,13 +16,13 @@ from sklearn.metrics import confusion_matrix, classification_report
 from sklearn.utils.class_weight import compute_class_weight
 import pickle
 
-from model.augmentation import get_augment_data
+from Pokemon_Core.Image_Module.augmentation import get_augment_data
 from Pokemon_Core.Image_Module import HARD_CODED_WIDTH, HARD_CODED_HEIGHT
 
 
 
 # Import get_augment_data from the correct module
-from model.augmentation import load_corner_dataframe as get_augment_data
+from Pokemon_Core.Image_Module.augmentation import load_corner_dataframe as get_augment_data
 from Pokemon_Core.Image_Module import HARD_CODED_WIDTH, HARD_CODED_HEIGHT
 
 # ─── Reproducibility ───────────────────────────────────────────────────────────
