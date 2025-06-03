@@ -1,3 +1,4 @@
+
 import os
 import matplotlib.pyplot as plt
 import requests
@@ -6,71 +7,97 @@ from PIL import Image
 from io import BytesIO
 
 
-path = "/Users/suzukikenta/code/Pokemon_Card_Project/Notebooks/Kenta"
-model_df = pd.read_csv(os.path.join(path, "prediction_model.csv"))
+script_dir = os.path.dirname(os.path.abspath(__file__))
+path = os.path.join(script_dir, "../../Data/Raw/prediction_model.csv")
+path_1 = os.path.join(script_dir, "../../Data/Raw/market_price.csv")
+model_df = pd.read_csv(path)
+market_df = pd.read_csv(path_1)
 
-def over_or_undervalued(card_id, set_id):
-    new_df = model_df[(model_df["card_id"] == card_id) & (model_df["set_id"] == set_id)]
-    print(new_df["over_or_under_valued_log"].values[0])
 
-over_or_undervalued("1", "base1")
 
-def recommendation_best_card(budget, type, generation):
+def market_predicted_price(card_id, set_id):
+    market_match = market_df[(market_df['card_id'] == card_id) & (market_df['set_id'] == set_id)]
+    model_match = model_df[(model_df['card_id'] == card_id) & (model_df['set_id'] == set_id)]
+
+    url = f"https://images.pokemontcg.io/{market_match['set_id'].iloc[0]}/{market_match['card_id'].iloc[0]}_hires.png"
+
+    response = requests.get(url)
+    img_0 = Image.open(BytesIO(response.content))
+
+    # If no market data is foundg
+    if market_match.empty:
+        return f"❌ No market data found for card {card_id} in set {set_id}.", img_0
+
+    market_price = market_match['market_price'].values[0]
+
+    # If no model prediction is found
+    if model_match.empty:
+        return f"Market Price: {market_price:.2f} EUR. We don't have the predicted price for this card.", img_0
+
+    predicted_price = model_match['predicted_price'].values[0]
+    valuation = model_match['over_or_under_valued_log'].values[0]
+
+    # url = f"https://images.pokemontcg.io/{market_match['set_id'].iloc[0]}/{market_match['card_id'].iloc[0]}_hires.png"
+
+
+
+    return f"Market Price: {market_price:.2f} EUR, Predicted Price: {predicted_price:.2f} EUR, Under/Over Valued: {valuation}", img_0
+
+market_predicted_price("17", "swsh1")
+
+def recommendation_best_card(budget, poke_type, generation):
     poke_types = model_df["single_type"].unique().tolist()
     generations = model_df["generation"].unique().tolist()
 
     filtered_df = model_df[
         (model_df["market_price"] <= budget) &
-        ((model_df["single_type"] == type) | (type not in poke_types)) &
+        ((model_df["single_type"] == poke_type) | (poke_type not in poke_types)) &
         ((model_df["generation"] == generation) | (generation not in generations))
     ]
 
-    # Filter to best predicted price
     filtered_df = filtered_df[filtered_df["predicted_price"] == filtered_df["predicted_price"].max()]
 
-    # Final output
-    filtered_df = filtered_df[['set_id', 'card_id', 'market_price', 'predicted_price', 'predicted_price_adjusted']]
     filtered_df = filtered_df.sort_values(by='market_price', ascending=True)
 
     url = f"https://images.pokemontcg.io/{filtered_df['set_id'].iloc[0]}/{filtered_df['card_id'].iloc[0]}_hires.png"
 
     response = requests.get(url)
     img = Image.open(BytesIO(response.content))
-    plt.imshow(img)
-    plt.axis('off')  # Optional: hides axis
-    plt.show()
 
-    print(f"The predicted price is {filtered_df['predicted_price'].values[0]:.1f}EUR. The market price is {round(filtered_df['market_price'].values[0],1)} EUR.")
+    predicted_price = filtered_df['predicted_price'].values[0]
+    market_price = filtered_df['market_price'].values[0]
 
-recommendation_best_card(1000, "Fire", "")
+    text_output = f"The predicted price is {predicted_price:.1f} EUR. The market price is {market_price:.1f} EUR."
+
+    # Return both text and image
+    return text_output, img
 
 
-def recommendation_biggest_margin_card(budget, type, generation):
+
+def recommendation_biggest_margin_card(budget, poke_type, generation):
     poke_types = model_df["single_type"].unique().tolist()
     generations = model_df["generation"].unique().tolist()
 
     filtered_df = model_df[
         (model_df["market_price"] <= budget) &
-        ((model_df["single_type"] == type) | (type not in poke_types)) &
+        ((model_df["single_type"] == poke_type) | (poke_type not in poke_types)) &
         ((model_df["generation"] == generation) | (generation not in generations))
     ]
 
-    # Filter to best predicted price
     diff = (filtered_df["predicted_price"] - filtered_df["market_price"])
     filtered_df = filtered_df[diff == diff.max()]
 
-    # Final output
-    filtered_df = filtered_df[['set_id', 'card_id', 'market_price', 'predicted_price', 'predicted_price_adjusted']]
     filtered_df = filtered_df.sort_values(by='market_price', ascending=True)
 
     url = f"https://images.pokemontcg.io/{filtered_df['set_id'].iloc[0]}/{filtered_df['card_id'].iloc[0]}_hires.png"
 
     response = requests.get(url)
-    img = Image.open(BytesIO(response.content))
-    plt.imshow(img)
-    plt.axis('off')  # Optional: hides axis
-    plt.show()
+    img_1 = Image.open(BytesIO(response.content))
 
-    print(f"The predicted price is {filtered_df['predicted_price'].values[0]:.1f}EUR. The market price is {round(filtered_df['market_price'].values[0],1)} EUR.")
+    predicted_price = filtered_df['predicted_price'].values[0]
+    market_price = filtered_df['market_price'].values[0]
 
-recommendation_biggest_margin_card(1000, "Fire", "")
+    text_output_1 = f"The predicted price is {predicted_price:.1f} EUR. The market price is {market_price:.1f} EUR."
+
+    # Return both text and image
+    return text_output_1, img_1
