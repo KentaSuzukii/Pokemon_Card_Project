@@ -1,3 +1,4 @@
+
 import os
 import matplotlib.pyplot as plt
 import requests
@@ -13,30 +14,36 @@ model_df = pd.read_csv(path)
 market_df = pd.read_csv(path_1)
 
 
+
 def market_predicted_price(card_id, set_id):
     market_match = market_df[(market_df['card_id'] == card_id) & (market_df['set_id'] == set_id)]
     model_match = model_df[(model_df['card_id'] == card_id) & (model_df['set_id'] == set_id)]
-
-    # If no market data is found
-    if market_match.empty:
-        return f"❌ No market data found for card {card_id} in set {set_id}."
-
-    market_price = market_match['market_price'].values[0]
-
-    # If no model prediction is found
-    if model_match.empty:
-        return f"Market Price: {market_price:.2f} EUR. We don't have the predicted price for this card."
-
-    predicted_price = model_match['predicted_price'].values[0]
-    valuation = model_match['over_or_under_valued_log'].values[0]
 
     url = f"https://images.pokemontcg.io/{market_match['set_id'].iloc[0]}/{market_match['card_id'].iloc[0]}_hires.png"
 
     response = requests.get(url)
     img_0 = Image.open(BytesIO(response.content))
 
+    # If no market data is foundg
+    if market_match.empty:
+        return f"❌ No market data found for card {card_id} in set {set_id}.", img_0
+
+    market_price = market_match['market_price'].values[0]
+
+    # If no model prediction is found
+    if model_match.empty:
+        return f"Market Price: {market_price:.2f} EUR. We don't have the predicted price for this card.", img_0
+
+    predicted_price = model_match['predicted_price'].values[0]
+    valuation = model_match['over_or_under_valued_log'].values[0]
+
+    # url = f"https://images.pokemontcg.io/{market_match['set_id'].iloc[0]}/{market_match['card_id'].iloc[0]}_hires.png"
+
+
+
     return f"Market Price: {market_price:.2f} EUR, Predicted Price: {predicted_price:.2f} EUR, Under/Over Valued: {valuation}", img_0
 
+market_predicted_price("17", "swsh1")
 
 def recommendation_best_card(budget, poke_type, generation):
     poke_types = model_df["single_type"].unique().tolist()
