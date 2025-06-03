@@ -13,6 +13,11 @@ from sklearn.metrics import confusion_matrix, classification_report
 from sklearn.utils.class_weight import compute_class_weight
 import pickle
 
+
+from PIL import Image
+from Pokemon_Core.Image_Module.deformer import deform_card
+from Pokemon_Core.Image_Module.prediction import card_prediction_processing, cfg
+from Pokemon_Core.Image_Module.text_detection import get_pokeid, get_id_coords
 from Pokemon_Core.Image_Module.augmentation import get_augment_data
 from Pokemon_Core.Image_Module import HARD_CODED_WIDTH, HARD_CODED_HEIGHT
 
@@ -183,3 +188,71 @@ def mobilenet_symbols_model(
         pickle.dump(le, f)
 
     return model, history, cm, le
+
+
+def recognize_card_from_photo(
+    img_path,
+    model_left, le_left,
+    model_right, le_right,
+    use_tight_ocr_crop=True
+):
+    """
+    Predicts set_id and card number from a Pokémon card photo.
+    Returns a dict with keys: 'set_id', 'poke_id'.
+    """
+    # Load & align card
+    pil_img = Image.open(img_path).convert("RGB")
+    aligned_img = deform_card(pil_img)
+
+    # Get bottom corners for prediction
+    graybottomleft, graybottomright = card_prediction_processing(aligned_img, cfg)
+
+    # Preprocess for MobileNetV2
+    def preprocess_region(region):
+        region = np.squeeze(region)
+        if region.ndim == 3 and region.shape[-1] == 1:
+            region = region[..., 0]
+        region = cv2.resize(region, (160, 160))
+        region = region.astype('float32')
+        region = np.expand_dims(region, axis=-1)
+        region = np.repeat(region, 3, axis=-1)
+        region = np.expand_dims(region, axis=0)
+        return region
+
+    region_left = preprocess_region(graybottomleft)
+    region_right = preprocess_region(graybottomright)
+
+    # Predict with both models
+    pred_left = model_left.predict(region_left)
+    pred_right = model_right.predict(region_right)
+
+    set_left = le_left.inverse_transform([np.argmax(pred_left)])[0]
+    set_right = le_right.inverse_transform([np.argmax(pred_right)])[0]
+    conf_left = float(np.max(pred_left))
+    conf_right = float(np.max(pred_right))
+
+    # Decide set_id
+    if set_left == "no" and set_right == "no":
+        return {"error": "No set detected with either model."}
+    elif set_left != "no" and set_right != "no":
+        set_id = set_left if conf_left >= conf_right else set_right
+    elif set_right == "no":
+        set_id = set_left
+    elif set_left == "no":
+        set_id = set_right
+
+    # --- Resize to standard for OCR ---
+    card_for_ocr = np.array(aligned_img)
+    if card_for_ocr.shape[:2] != (825, 600):
+        card_for_ocr = cv2.resize(card_for_ocr, (600, 825))
+
+    # --- Tight crop for EasyOCR ---
+    a, b, c, d = get_id_coords(set_id, card_for_ocr.shape, tight=use_tight_ocr_crop)
+    ocr_patch = card_for_ocr[b:d, a:c]
+    pokeid = get_pokeid(ocr_patch, set_id)
+
+    # Only return set_id and pokeid
+    return {
+        "set_id": set_id,
+        "poke_id": pokeid
+    }
