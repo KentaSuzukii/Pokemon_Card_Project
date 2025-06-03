@@ -124,13 +124,17 @@ def reduce_side(df: pd.DataFrame, side: str, reduced_set: int = REDUCED_SET, ver
         print(f"Sample count per class for '{side}':\n{sampled['set_id'].value_counts()}")
     return sampled
 
+
+
 # ---------------------- Model Ready Preprocessing ----------------------
+from Pokemon_Core.Image_Module.new_model import preprocess_symbol_patch
 
 def prepare_X_y(df, img_key='corner'):
-    X = np.stack([np.expand_dims(img, -1) if img.ndim == 2 else img for img in df[img_key].values])
+    X = np.stack([preprocess_symbol_patch(img) for img in df[img_key].values])
     X = X.astype('float32') / 255.
     y = df['set_id'].values
     return X, y
+
 
 # ---------------------- Class Weights (for Imbalance) ----------------------
 
@@ -140,48 +144,24 @@ def compute_class_weights(y):
     class_weight_dict = dict(zip(classes, class_weights))
     return class_weight_dict
 
-# ---------------------- Example Usage (Commented for Notebooks/Scripts) ----------------------
 
-if __name__ == "__main__":
-    # 1. Build the full dataset
-    df_full = create_dataset()
-    print("Total records:", len(df_full))
+# --- util.py ---
 
-    # 2. Optionally balance per side and/or save crops to disk
-    df_left  = reduce_side(df_full, 'left')
-    df_right = reduce_side(df_full, 'right')
+def save_df_json(df, folder, fname):
+    import os
+    os.makedirs(folder, exist_ok=True)
+    out_path = os.path.join(folder, fname)
+    df_to_save = df.copy()
+    df_to_save['corner'] = df_to_save['corner'].apply(lambda arr: arr.tolist())
+    df_to_save.to_json(out_path)
+    print(f"✅ Saved: {out_path}")
 
-    # 3. If needed, save balanced crops
-    # df_left_disk = save_crops_to_disk(df_left, out_dir="crops_left")
-    # df_right_disk = save_crops_to_disk(df_right, out_dir="crops_right")
+def load_augmented(path_json):
+    from Pokemon_Core.Image_Module.augmentation import get_augment_data
+    df_aug = get_augment_data(path_json)
+    print(f"✅ Loaded & augmented: {path_json}, samples: {len(df_aug)}")
+    return df_aug
 
-    # 4. Prepare data for ML
-    X_left, y_left = prepare_X_y(df_left)
-    X_right, y_right = prepare_X_y(df_right)
-
-    # 5. Compute class weights
-    class_weight_left = compute_class_weights(y_left)
-    print("Class weights (left):", class_weight_left)
-
-    # Now you're ready to train a model!
-
-    return sampled.reset_index(drop=True)
-
-# ---------------------- Model Ready Preprocessing ----------------------
-
-def prepare_X_y(df, img_key='corner'):
-    X = np.stack([np.expand_dims(img, -1) if img.ndim == 2 else img for img in df[img_key].values])
-    X = X.astype('float32') / 255.
-    y = df['set_id'].values
-    return X, y
-
-# ---------------------- Class Weights (for Imbalance) ----------------------
-
-def compute_class_weights(y):
-    classes = np.unique(y)
-    class_weights = compute_class_weight('balanced', classes=classes, y=y)
-    class_weight_dict = dict(zip(classes, class_weights))
-    return class_weight_dict
 
 # ---------------------- Example Usage (Commented for Notebooks/Scripts) ----------------------
 
