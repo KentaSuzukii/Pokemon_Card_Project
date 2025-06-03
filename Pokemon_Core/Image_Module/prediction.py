@@ -43,26 +43,41 @@ cfg = CardConfig()
 # ─── Prediction Preprocessing ─────────────────────────────────────────────────
 def card_prediction_processing(
     card: np.ndarray,
-    cfg: CardConfig = cfg
+    cfg
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Resize to (init_w, init_h), crop bottom corners, convert to grayscale,
-    normalize to [0,1], and add batch+channel dims → shapes (1,H,W,1).
+    normalize to [0,1], and add batch+channel dims → shapes (1, H, W, 1).
     Returns (left_corner, right_corner).
     """
-    # 1) resize
+
+    # Input check
+    if not isinstance(card, np.ndarray):
+        raise ValueError("Input image must be a NumPy array. Use np.array(img) if you loaded with PIL.")
+
+    # 1) Resize to standard size
     card_img = cv2.resize(card, (cfg.init_w, cfg.init_h))
-    # 2) slice bottom-left & bottom-right
+
+    # 2) Slice bottom-left & bottom-right corners
     h, w = cfg.init_h, cfg.init_w
     bl = card_img[h - cfg.crop_h : h, 0 : cfg.crop_w]
     br = card_img[h - cfg.crop_h : h, w - cfg.crop_w : w]
-    # 3) grayscale
+
+    # 3) Convert to grayscale
     gl = cv2.cvtColor(bl, cv2.COLOR_BGR2GRAY)
     gr = cv2.cvtColor(br, cv2.COLOR_BGR2GRAY)
-    # 4) normalize & reshape
+
+    # 4) Normalize and reshape to (1, H, W, 1)
     gl = (gl.astype(np.float32) / 255.0)[np.newaxis, ..., np.newaxis]
     gr = (gr.astype(np.float32) / 255.0)[np.newaxis, ..., np.newaxis]
+
+    # Output shape check
+    if gl.shape != (1, cfg.crop_h, cfg.crop_w, 1) or gr.shape != (1, cfg.crop_h, cfg.crop_w, 1):
+        print(f"Warning: Output shape mismatch! Left: {gl.shape}, Right: {gr.shape}")
+        return None
+
     return gl, gr
+
 
 # ─── OCR Cropping ──────────────────────────────────────────────────────────────
 def card_ocr_crop(
