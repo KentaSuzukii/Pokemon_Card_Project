@@ -7,6 +7,8 @@ from PIL import Image
 import io
 import tensorflow as tf
 import pickle
+import requests
+from io import BytesIO
 
 
 def app():
@@ -17,38 +19,44 @@ def app():
 
     uploaded_file = st.file_uploader("Choose an image file", type=["png", "jpg", "jpeg"])
 
-    if uploaded_file is not None:
-        # Read image file as bytes
-        bytes_data = uploaded_file.read()
+    @st.cache_resource
+    def load_models():
+        model_left = tf.keras.models.load_model("Data/Processed/Organized_Images/Left/mobilenet_left_model.h5")
+        with open("Data/Processed/Organized_Images/Left/le_left.pkl", "rb") as f:
+            le_left = pickle.load(f)
+        model_right = tf.keras.models.load_model("Data/Processed/Organized_Images/Right/mobilenet_right_model.h5")
+        with open("Data/Processed/Organized_Images/Right/le_right.pkl", "rb") as f:
+            le_right = pickle.load(f)
+        return model_left, le_left, model_right, le_right
 
-        # Open image with PIL
-        image = Image.open(io.BytesIO(bytes_data))
+    model_left, le_left, model_right, le_right = load_models()
 
-        # Display image in the app
-        st.image(image, caption="Uploaded Image", use_column_width=True)
+    try:
+        card_set_id = recognize_card_from_photo(uploaded_file,model_left, le_left, model_right, le_right)
 
-    # @st.cache_resource
-    # def load_models():
-    #     model_left = tf.keras.models.load_model("Data/Processed/Organized_Images/Left/mobilenet_left_model.h5")
-    #     with open("Data/Processed/Organized_Images/Left/le_left.pkl", "rb") as f:
-    #         le_left = pickle.load(f)
-    #     model_right = tf.keras.models.load_model("Data/Processed/Organized_Images/Right/mobilenet_right_model.h5")
-    #     with open("Data/Processed/Organized_Images/Right/le_right.pkl", "rb") as f:
-    #         le_right = pickle.load(f)
-    #     return model_left, le_left, model_right, le_right
+        card_id_i = card_set_id["poke_id"]
+        set_id_i = card_set_id["set_id"]
 
-    # model_left, le_left, model_right, le_right = load_models()
+    except:
+        pass
 
+    try:
+        result = market_predicted_price(card_id_i, set_id_i)
 
+            # Handle both string-only and (text, image) return types
+        if isinstance(result, tuple):
+            text_output_0, image_0 = result
+            st.markdown(text_output_0)
+            st.image(image_0, caption="Pokémon Card Image")
+            st.markdown(f"**Card ID:** {card_id_i} | **Set ID:** {set_id_i}")
+        else:
+            st.markdown(result)
 
-    a = recognize_card_from_photo(uploaded_file,model_left, le_left, model_right, le_right)
-
-    card_id_i = a["poke_id"]
-    set_id_i = a["set_id"]
-
-    st.markdown(f"**Card ID:** {card_id_i} | **Set ID:** {set_id_i}")
+    except Exception as e:
+        pass
 
     st.markdown("<div style='height:70px;'></div>", unsafe_allow_html=True)
+
 
     #If the image scanning doesn't work
 
