@@ -1,5 +1,8 @@
 # Ignore all contents in Data
-Data/*
+Data/External
+Data/Plots
+Data/Processed
+Data/Raw
 *.jpg
 
 # But allow folder structure to be tracked
