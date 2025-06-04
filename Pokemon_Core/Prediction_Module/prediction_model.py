@@ -13,8 +13,6 @@ path_1 = os.path.join(script_dir, "../../Data/Raw/market_price.csv")
 model_df = pd.read_csv(path)
 market_df = pd.read_csv(path_1)
 
-
-
 def market_predicted_price(card_id, set_id):
     market_match = market_df[(market_df['card_id'] == card_id) & (market_df['set_id'] == set_id)]
     model_match = model_df[(model_df['card_id'] == card_id) & (model_df['set_id'] == set_id)]
@@ -41,9 +39,7 @@ def market_predicted_price(card_id, set_id):
 
 
 
-    return f"Market Price: {market_price:.2f} EUR, Predicted Price: {predicted_price:.2f} EUR, Under/Over Valued: {valuation}", img_0
-
-market_predicted_price("17", "swsh1")
+    return market_price,predicted_price,valuation, img_0
 
 def recommendation_best_card(budget, poke_type, generation):
     poke_types = model_df["single_type"].unique().tolist()
@@ -70,7 +66,7 @@ def recommendation_best_card(budget, poke_type, generation):
     text_output = f"The predicted price is {predicted_price:.1f} EUR. The market price is {market_price:.1f} EUR."
 
     # Return both text and image
-    return text_output, img
+    return market_price,predicted_price, img
 
 
 
@@ -97,7 +93,5 @@ def recommendation_biggest_margin_card(budget, poke_type, generation):
     predicted_price = filtered_df['predicted_price'].values[0]
     market_price = filtered_df['market_price'].values[0]
 
-    text_output_1 = f"The predicted price is {predicted_price:.1f} EUR. The market price is {market_price:.1f} EUR."
-
     # Return both text and image
-    return text_output_1, img_1
+    return market_price, predicted_price, img_1
