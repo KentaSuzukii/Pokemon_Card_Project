@@ -2,6 +2,10 @@
 
 import os
 import sys
+
+# Fix module import path so that 'Pokemon_Core' is recognized
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import streamlit as st
 import streamlit.web.cli as stcli
 from page_identifier import show_identifier_page
