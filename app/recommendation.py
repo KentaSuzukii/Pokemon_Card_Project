@@ -37,12 +37,12 @@ def app():
             </video>
             """
             placeholder.markdown(video_html, unsafe_allow_html=True)
-            time.sleep(12)
+            time.sleep(10)
 
         # Now replace the entire placeholder with both text and image
         with placeholder.container():
             st.markdown(text_output)
-            st.image(image, caption="Recommended Pokémon Card", use_container_width=True)
+            st.image(image, caption="Recommended Pokémon Card", use_column_width=True)
 
 
 
@@ -83,9 +83,9 @@ def app():
             </video>
             """
             placeholder.markdown(video_html, unsafe_allow_html=True)
-            time.sleep(12)
+            time.sleep(10)
 
         # Replace video with result
         with placeholder.container():
             st.markdown(text_output_1)
-            st.image(image_1, caption="Recommended Pokémon Card", use_container_width=True)
+            st.image(image_1, caption="Recommended Pokémon Card", use_column_width=True)

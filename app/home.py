@@ -13,10 +13,10 @@ def app():
         st.image("Data/Image/boy.jpg", width=170)
         if st.button("Find your Pokémon’s true strength!"):
             st.session_state.page_selection = "Find your Pokémon’s true strength!"
-            st.rerun()
+            st.experimental_rerun()
 
     with col2:
         st.image("Data/Image/girl.jpg", width=170)
         if st.button("Get help to choose your best card!"):
             st.session_state.page_selection = "Get help to choose your best card!"
-            st.rerun()
+            st.experimental_rerun()
