@@ -1,5 +1,5 @@
 import streamlit as st
-from App import home, over_under_valued, recommendation
+from app import home, over_under_valued, recommendation
 
 PAGES = {
     "Home": home,
