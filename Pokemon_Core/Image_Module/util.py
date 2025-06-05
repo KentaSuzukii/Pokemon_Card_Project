@@ -192,5 +192,3 @@ if __name__ == "__main__":
     # 5. Compute class weights
     class_weight_left = compute_class_weights(y_left)
     print("Class weights (left):", class_weight_left)
-
-    # Now you're ready to train a model!
