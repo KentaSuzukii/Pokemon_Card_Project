@@ -21,8 +21,24 @@ def set_background(image_path):
         background-position: center;
         height: 100vh;
     }}
+
+    /* Light mode */
+    @media (prefers-color-scheme: light) {{
+        section.main {{
+            background-color: rgba(255, 255, 255, 0.7);
+            color: #222222;
+        }}
+    }}
+
+    /* Dark mode */
+    @media (prefers-color-scheme: dark) {{
+        section.main {{
+            background-color: rgba(30, 30, 30, 0.7);
+            color: #f0f0f0;
+        }}
+    }}
+
     section.main {{
-        background-color: rgba(255, 255, 255, 0.85);
         padding: 1rem 2rem;
         border-radius: 10px;
     }}
@@ -46,8 +62,13 @@ def app():
     budget = st.number_input("Enter your budget (EUR)", min_value=0, value=100,key='budget')
 
     poke_type = st.selectbox("Select Pokémon type", [
-    "None", "Fire", "Water", "Grass", "Psychic", "Colorless", "Fighting",
-        "Lightning", "Darkness", "Metal", "Dragon", "Fairy", "None"])
+    "None", "Fire", "Water", "Grass", "Psychic", "Normal", "Fighting",
+        "Lightning", "Darkness", "Metal", "Dragon", "Fairy"])
+
+    if poke_type == "Normal":
+        poke_type = "Colorless"
+    else:
+        pass
 
     generation = st.selectbox("Select Generation", ["None", "First", "Second", "Third","Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth", "None"])
 
@@ -88,9 +109,14 @@ def app():
 
     poke_type_1 = st.selectbox(
         "Select Pokémon type",
-        ["None", "Fire", "Water", "Grass", "Psychic", "Colorless", "Fighting",
-        "Lightning", "Darkness", "Metal", "Dragon", "Fairy", "None"]
+        ["None", "Fire", "Water", "Grass", "Psychic", "Normal", "Fighting",
+        "Lightning", "Darkness", "Metal", "Dragon", "Fairy"]
         ,key="poke_type_1")
+
+    if poke_type_1 == "Normal":
+        poke_type_1 = "Colorless"
+    else:
+        pass
 
     generation_1 = st.selectbox(
         "Select Generation",

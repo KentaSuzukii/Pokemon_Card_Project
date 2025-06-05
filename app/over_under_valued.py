@@ -12,6 +12,7 @@ from io import BytesIO
 import base64
 
 
+
 def set_background(image_path):
     with open(image_path, "rb") as f:
         data = f.read()
@@ -28,8 +29,24 @@ def set_background(image_path):
         background-position: center;
         height: 100vh;
     }}
+
+    /* Light mode */
+    @media (prefers-color-scheme: light) {{
+        section.main {{
+            background-color: rgba(255, 255, 255, 0.7);
+            color: #222222;
+        }}
+    }}
+
+    /* Dark mode */
+    @media (prefers-color-scheme: dark) {{
+        section.main {{
+            background-color: rgba(30, 30, 30, 0.7);
+            color: #f0f0f0;
+        }}
+    }}
+
     section.main {{
-        background-color: rgba(255, 255, 255, 0.85);
         padding: 1rem 2rem;
         border-radius: 10px;
     }}
@@ -37,6 +54,7 @@ def set_background(image_path):
     """,
     unsafe_allow_html=True,
 )
+
 
 def app():
     #Image Detection
@@ -127,7 +145,7 @@ def app():
     #If the image scanning doesn't work
 
     st.markdown(
-    '<p style="color: blue; font-size: 30px;">Upload and Display an Image</p>',
+    '<p style="color: blue; font-size: 30px;">Manual Input</p>',
     unsafe_allow_html=True)
 
     card_id = str(st.number_input("Enter your card id", min_value=1, value=1))
