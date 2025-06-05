@@ -127,7 +127,14 @@ def reduce_side(df: pd.DataFrame, side: str, reduced_set: int = REDUCED_SET, ver
 
 
 # ---------------------- Model Ready Preprocessing ----------------------
-from Pokemon_Core.Image_Module.new_model import preprocess_symbol_patch
+def preprocess_symbol_patch(corner):
+    # corner: np.array of shape (orig_h, orig_w, 1) or (orig_h, orig_w)
+    img = corner.squeeze() if corner.ndim == 3 and corner.shape[2] == 1 else corner
+    img = cv2.resize(img, (128, 128))  # Resize to (128,128)
+    if img.ndim == 2:  # make sure it's 3 channels
+        img = np.stack([img] * 3, axis=-1)
+    return img
+
 
 def prepare_X_y(df, img_key='corner'):
     X = np.stack([preprocess_symbol_patch(img) for img in df[img_key].values])
