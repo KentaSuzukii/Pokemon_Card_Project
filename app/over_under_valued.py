@@ -100,7 +100,7 @@ def app():
                         if valuation_0 == "overvalued":
                             st.markdown(f'<p style="color: red; font-size: 20px;">Market Price:{market_price_0:.2f}EUR</p>',
     unsafe_allow_html=True)
-                            st.markdown(f'<p style="color: red; font-size: 20px;">Predicted Price:{predicted_price_0:.2f}EUR</p>',
+                            st.markdown(f'<p style="color: red; font-size: 20px;">Expected Price:{predicted_price_0:.2f}EUR</p>',
     unsafe_allow_html=True)
                             st.markdown(
     f"""
@@ -114,7 +114,7 @@ def app():
                         else:
                             st.markdown(f'<p style="color: green; font-size: 20px;">Market Price:{market_price_0:.2f}EUR</p>',
     unsafe_allow_html=True)
-                            st.markdown(f'<p style="color: green; font-size: 20px;">Predicted Price:{predicted_price_0:.2f}EUR</p>',
+                            st.markdown(f'<p style="color: green; font-size: 20px;">Expected Price:{predicted_price_0:.2f}EUR</p>',
     unsafe_allow_html=True)
                             st.markdown(
     f"""
@@ -174,7 +174,7 @@ def app():
                 if valuation_1 == "overvalued":
                     st.markdown(f'<p style="color: red; font-size: 20px;">Market Price:{market_price_1:.2f}EUR</p>',
 unsafe_allow_html=True)
-                    st.markdown(f'<p style="color: red; font-size: 20px;">Predicted Price:{predicted_price_1:.2f}EUR</p>',
+                    st.markdown(f'<p style="color: red; font-size: 20px;">Expected Price:{predicted_price_1:.2f}EUR</p>',
 unsafe_allow_html=True)
                     st.markdown(
 f"""
@@ -188,7 +188,7 @@ unsafe_allow_html=True
                 else:
                     st.markdown(f'<p style="color: green; font-size: 20px;">Market Price:{market_price_1:.2f}EUR</p>',
 unsafe_allow_html=True)
-                    st.markdown(f'<p style="color: green; font-size: 20px;">Predicted Price:{predicted_price_1:.2f}EUR</p>',
+                    st.markdown(f'<p style="color: green; font-size: 20px;">Expected Price:{predicted_price_1:.2f}EUR</p>',
 unsafe_allow_html=True)
                     st.markdown(
 f"""

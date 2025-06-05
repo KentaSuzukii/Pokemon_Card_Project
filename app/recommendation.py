@@ -93,7 +93,7 @@ def app():
         with placeholder.container():
             st.markdown(f'<p style="color: green; font-size: 20px;">Market Price:{market_price:.2f}EUR</p>',
     unsafe_allow_html=True)
-            st.markdown(f'<p style="color: green; font-size: 20px;">Predicted Price:{predicted_price:.2f}EUR</p>',
+            st.markdown(f'<p style="color: green; font-size: 20px;">Expected Price:{predicted_price:.2f}EUR</p>',
     unsafe_allow_html=True)
 
             st.image(image, caption="Recommended Pokémon Card", width=500)
@@ -146,7 +146,7 @@ def app():
         with placeholder.container():
             st.markdown(f'<p style="color: green; font-size: 20px;">Market Price:{market_price:.2f}EUR</p>',
     unsafe_allow_html=True)
-            st.markdown(f'<p style="color: green; font-size: 20px;">Predicted Price:{predicted_price:.2f}EUR</p>',
+            st.markdown(f'<p style="color: green; font-size: 20px;">Expected Price:{predicted_price:.2f}EUR</p>',
     unsafe_allow_html=True)
 
             st.image(image_1, caption="Recommended Pokémon Card", width=500)
