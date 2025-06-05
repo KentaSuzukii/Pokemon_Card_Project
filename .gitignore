@@ -1,6 +1,9 @@
 # Ignore all contents in Data
-Data/*
-*.jpg
+Data/External
+Data/Plots
+Data/Processed
+Data/Raw
+
 
 # But allow folder structure to be tracked
 !Data/
@@ -186,5 +189,3 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
-.python-version
-.python-version
