@@ -75,4 +75,4 @@ cd pokeprice-analyzer
 pip install -r requirements.txt
 
 # Run the Streamlit app
-streamlit run stramlit_app.py
+streamlit run streamlit_app.py
