@@ -34,7 +34,7 @@ I led the development of **three key components**:
 - Focused on **interactivity** and **visual appeal**
 - Features included:
   - Pokémon-style background theme
-  - Easter egg surprise 🔍
+  - //Master Ball// surprise
   - Iterative improvements based on user feedback from testing
 
 ---
@@ -68,11 +68,11 @@ I led the development of **three key components**:
 
 ```bash
 # Clone the repo
-git clone https://github.com/yourusername/pokeprice-analyzer.git
+git clone https://github.com/KentaSuzukii/Pokemon_Card_Project.git
 cd pokeprice-analyzer
 
 # Install dependencies
 pip install -r requirements.txt
 
 # Run the Streamlit app
-streamlit run app.py
+streamlit run stramlit_app.py
