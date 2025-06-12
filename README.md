@@ -19,13 +19,13 @@ I led the development of **three key components**:
 
 ### 1. 📈 Card Evaluation (Regression Modeling)
 - Trained a regression model to predict the *true market value* of Pokémon cards
-- Used historical and metadata features (e.g., release year, rarity, condition)
+- Used historical features (e.g., type(like fire and water), rarity, HP)
 - Compared predictions against current market prices to flag:
   - Overpriced cards (⚠️ Overestimated)
   - Bargains (💸 Underestimated)
 
 ### 2. 🧠 Card Recommendation System
-- Built a smart system to suggest the **best-value cards** within a user’s specified budget
+- Built a smart system to suggest the **best-value cards** within a user’s specified budget, their favorite type and generation 
 - Ranked cards based on **value-to-cost ratio**
 - Helped users discover hidden gems in the Pokémon card market
 
@@ -35,7 +35,7 @@ I led the development of **three key components**:
 - Features included:
   - Pokémon-style background theme
   - //Master Ball// surprise
-  - Iterative improvements based on user feedback from testing
+  - Iterative improvements based on user feedback from testing(my friends)
 
 ---
 
