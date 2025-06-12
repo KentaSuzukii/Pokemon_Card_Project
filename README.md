@@ -53,7 +53,7 @@ I led the development of **three key components**:
 - **Streamlit**: Front-end web interface
 - **scikit-learn**: Regression modeling
 - **pandas / NumPy**: Data processing
-- **OpenCV / PIL** *(if used)*: Image handling
+- **OpenCV / PIL**: Image handling (My teammate used it)
 - **Git** + **GitHub**: Version control
 
 ---
